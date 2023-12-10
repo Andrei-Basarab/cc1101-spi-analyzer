@@ -1,0 +1,13 @@
+{
+    "name": "CC1101 SPI Analyzer",
+    "apiVersion": "1.0.0",
+    "author": "Andrei Basarab",
+    "version": "0.0.1",
+    "description": "SPI protocol analyzer for the Texas Instruments CC1101 RF Transceiver",
+    "extensions": {
+        "CC1101 SPI Analyzer": {
+            "type": "HighLevelAnalyzer",
+            "entryPoint": "HighLevelAnalyzer.Hla"
+        }
+    }
+}
