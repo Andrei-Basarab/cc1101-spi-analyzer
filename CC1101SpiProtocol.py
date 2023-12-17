@@ -142,6 +142,9 @@ STATE_BITS = {
 }
 
 
+class ProtocolException(Exception):
+    pass
+
 class ProtocolFrameType:
     REGISTER = "register"
     COMMAND = "cmd"
@@ -162,10 +165,12 @@ class CC1101SpiProtocol:
         "register": None,
         "data": None,
         "description": None,
+        "error": None,
     }
     RESPONSE = {
         "status": None,
         "data": None,
+        "error": None,
     }
     STATUS = {
         "chip_rdy": None,
@@ -210,6 +215,7 @@ class CC1101SpiProtocol:
         register = None
         address = data_byte & 0x3F
         frame_type = None
+        error = None
 
         if address < 0x30:
             frame_type = ProtocolFrameType.REGISTER
@@ -223,11 +229,18 @@ class CC1101SpiProtocol:
         elif self.is_read(data_byte) and self.is_burst(data_byte):
             frame_type = ProtocolFrameType.STATUS
             register = STATUS_REGISTERS[address]
-        else:
-            frame_type = ProtocolFrameType.COMMAND
-            register = COMMAND_REGISTERS[address]
+        elif address <= 0x3D:
+            if address != 0x37:
+                frame_type = ProtocolFrameType.COMMAND
+                register = COMMAND_REGISTERS[address]
+            else:
+                frame_type = ProtocolFrameType.ERROR
+                error = "Invalid COMMAND"
+        elif address > 0x3D:
+            frame_type = ProtocolFrameType.ERROR
+            error = "Invalid ADDRESS"
 
-        return frame_type, register["register"], register["description"]
+        return frame_type, register["register"], register["description"], error
 
     def interpret_request(self, data):
         request = deepcopy(self.REQUEST)
@@ -237,7 +250,7 @@ class CC1101SpiProtocol:
         request["burst"] = "B" if self.is_burst(data[0]) else ""
 
         # Register address
-        request["type"], request["register"], request["description"] = self.interpret_register(data[0])
+        request["type"], request["register"], request["description"], request["error"] = self.interpret_register(data[0])
 
         # Data Byte
         if len(data) > 1:

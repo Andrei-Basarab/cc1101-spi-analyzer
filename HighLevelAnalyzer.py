@@ -36,7 +36,7 @@ class Hla(HighLevelAnalyzer):
             'format': 'Error: {{type}}'
         },
         ProtocolFrameType.ERROR: {
-            'format': 'Error: {{type}}'
+            'format': 'Error: {{type}} | {{data.error_details}}'
         },
         ProtocolFrameType.REGISTER: {
             'format': 'Register: {{data.access}} | {{data.register}} = {{data.focus_data}}'
@@ -157,17 +157,25 @@ class Hla(HighLevelAnalyzer):
         fifo_bytes_available = "" if response is None else "{}".format(response["status"]["fifo_bytes_available"])
         read_data            = "" if response is None else " ".join(["{:02X}".format(x) for x in response["data"]])
         description          = protocol_msg["request"]["description"]
+        focus_data           = ""
+        error_details        = ""
 
         # Focus Data is used mainly for the Protocol UI labels
         if frame_type == ProtocolFrameType.ERROR:
-            focus_data = ""
+            error_details = protocol_msg["request"]["error"]
         elif frame_type == ProtocolFrameType.REGISTER:
             focus_data = write_data if access == "W" else read_data
         elif frame_type == ProtocolFrameType.COMMAND:
-            focus_data = ""
+            pass
         elif frame_type == ProtocolFrameType.STATUS:
             if register == "MARCSTATE":
-                focus_data = MARC_STATE[response["data"][0]]["state"]
+                marc_state = response["data"][0]
+                if marc_state <= 0x16:
+                    focus_data = MARC_STATE[response["data"][0]]["state"]
+                else:
+                    # See [SWRZ020E] CC1101 Silicon Errata
+                    frame_type = ProtocolFrameType.ERROR
+                    error_details = "Invalid MARCSTATE"
             else:
                 focus_data = read_data
         elif frame_type == ProtocolFrameType.PA_TABLE:
@@ -189,7 +197,7 @@ class Hla(HighLevelAnalyzer):
                 "read_data":            read_data,
                 "register_description": description,
                 "focus_data":           focus_data,
-                "error_details":        "",
+                "error_details":        error_details,
             }
         )
 
