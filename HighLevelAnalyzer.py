@@ -1,7 +1,7 @@
 # High Level Analyzer
 # For more information and documentation, please go to https://support.saleae.com/extensions/high-level-analyzer-extensions
 
-from saleae.analyzers import HighLevelAnalyzer, AnalyzerFrame, StringSetting, NumberSetting, ChoicesSetting
+from saleae.analyzers import HighLevelAnalyzer, AnalyzerFrame
 from copy import deepcopy
 from CC1101SpiProtocol import CC1101SpiProtocol, ProtocolFrameType, MARC_STATE
 
@@ -24,11 +24,6 @@ class SpiFrameState:
 
 # High level analyzers must subclass the HighLevelAnalyzer class.
 class Hla(HighLevelAnalyzer):
-    # List of settings that a user can set for this High Level Analyzer.
-    # TODO Check the String/Number/Choice settings
-    # my_string_setting = StringSetting()
-    # my_number_setting = NumberSetting(min_value=0, max_value=100)
-    # my_choices_setting = ChoicesSetting(choices=('A', 'B'))
 
     # An optional list of types this analyzer produces, providing a way to customize the way frames are displayed in Logic 2.
     result_types = {
@@ -65,14 +60,6 @@ class Hla(HighLevelAnalyzer):
         self.protocol = CC1101SpiProtocol()
         self.start_time = 0
         self.end_time = 0
-
-        # TODO Check the String/Number/Choice settings
-        # print(
-        #     "Settings:",
-        #     self.my_string_setting,
-        #     self.my_number_setting,
-        #     self.my_choices_setting
-        # )
 
     def decode(self, frame: AnalyzerFrame):
         '''
